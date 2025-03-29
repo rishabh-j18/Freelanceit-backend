@@ -9,9 +9,22 @@ const projectSchema = new mongoose.Schema({
   status: { type: String, enum: ['open', 'in_progress', 'completed', 'cancelled'], default: 'open' },
   categories: [String],
   required_skills: [String],
-  created_at: { type: Date, default: Date.now }
+  location: { type: String },
+  experience_level: { type: String, default: 'Intermediate' }, // Added
+  milestones: [ // Added
+    {
+      title: { type: String, required: true },
+      description: { type: String, default: '' },
+      due_date: { type: Date, required: true },
+      amount: { type: Number, required: true }
+    }
+  ],
+  payment_terms: { type: String, default: 'Fixed Price' }, // Added
+  created_at: { type: Date, default: Date.now },
+  deleted_at: { type: Date, default: null }
 });
 
 projectSchema.index({ client_id: 1, status: 1 });
+projectSchema.index({ title: 'text', description: 'text' });
 
 module.exports = mongoose.model('Project', projectSchema);

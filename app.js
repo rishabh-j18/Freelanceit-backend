@@ -1,8 +1,20 @@
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
-const connectDB=require('./db/db');
-const authRouter=require('./router/auth')
+const connectDB = require("./db/db");
+const authRouter = require("./router/auth");
+const gigRouter = require("./router/gig");
+const contractrouter=require('./router/contractroute')
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const upload = multer({ dest: 'uploads/' });
 
 const app = express();
 
@@ -17,21 +29,17 @@ app.use(
 );
 connectDB();
 
-
-app.get('/',()=>{
-  console.log("runnning server")
-})
-
-
+app.get("/", () => {
+  console.log("runnning server");
+});
 
 //Here goes routing tranfer codes.
-app.use('/authuser',authRouter); 
-
-
-
+app.use("/authuser",upload.single('photo'), authRouter);
+app.use("/gig", gigRouter);
+app.use("/contracts",contractrouter);
 
 const server = http.createServer(app);
 
-server.listen(5000,()=>{
-    console.log('Server is running on port 5000');
-})
+server.listen(5000, () => {
+  console.log("Server is running on port 5000");
+});
