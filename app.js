@@ -4,6 +4,7 @@ const http = require("http");
 const connectDB = require("./db/db");
 const authRouter = require("./router/auth");
 const gigRouter = require("./router/gig");
+const paymentroute=require('./router/paymentroute')
 const contractrouter=require('./router/contractroute')
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
@@ -34,9 +35,11 @@ app.get("/", () => {
 });
 
 //Here goes routing tranfer codes.
-app.use("/authuser",upload.single('photo'), authRouter);
-app.use("/gig", gigRouter);
+app.use("/auth",upload.single('photo'), authRouter);
+app.use("/gigs", gigRouter);
 app.use("/contracts",contractrouter);
+app.use("/payments",paymentroute);
+
 
 const server = http.createServer(app);
 

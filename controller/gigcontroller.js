@@ -64,7 +64,14 @@ const createProject = async (req, res) => {
       required_skills,
       location,
     } = req.body;
-    const client_id = req.user.id;
+    const user_id = req.user.id; // User ID from token
+
+    // Find the Client document for this user
+    const client = await Client.findOne({ user_id });
+    if (!client) {
+      return res.status(403).json({ message: "Client profile not found for this user" });
+    }
+    const client_id = client._id; // Use Client._id, not User._id
 
     // Check required fields
     if (!title || !description || !budget || !deadline) {
@@ -73,14 +80,10 @@ const createProject = async (req, res) => {
 
     // Validate types and values
     if (typeof budget !== "number" || budget <= 0) {
-      return res
-        .status(400)
-        .json({ message: "Budget must be a positive number" });
+      return res.status(400).json({ message: "Budget must be a positive number" });
     }
     if (new Date(deadline) <= new Date()) {
-      return res
-        .status(400)
-        .json({ message: "Deadline must be in the future" });
+      return res.status(400).json({ message: "Deadline must be in the future" });
     }
 
     // Ensure arrays for categories and skills
@@ -88,7 +91,7 @@ const createProject = async (req, res) => {
     const projectSkills = Array.isArray(required_skills) ? required_skills : [];
 
     const project = new Project({
-      client_id,
+      client_id, // Use Client._id
       title,
       description,
       budget,
@@ -109,6 +112,7 @@ const createProject = async (req, res) => {
       project: populatedProject,
     });
   } catch (error) {
+    console.error(error); // Log error for debugging
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -294,10 +298,17 @@ const createApplication = async (req, res) => {
 
 const getProjectApplications = async (req, res) => {
   try {
-    const { id } = req.params;
-    const client_id = req.user.id;
+    const { id } = req.params; // Project ID
+    const user_id = req.user.id; // User._id from token
 
-    const project = await Project.findOne({ _id: id, client_id, deleted_at: null });
+    // Find the Client document for this user
+    const client = await Client.findOne({ user_id });
+    if (!client) {
+      return res.status(403).json({ message: "Client profile not found for this user" });
+    }
+    const client_id = client._id; // Use Client._id
+
+    const project = await Project.findOne({ _id: id, client_id });
     if (!project) {
       return res.status(404).json({ message: "Project not found or unauthorized" });
     }
@@ -308,14 +319,16 @@ const getProjectApplications = async (req, res) => {
 
     res.status(200).json(applications);
   } catch (error) {
+    console.error(error); // Log for debugging
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
 const updateApplicationStatus = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // Application ID
     const { status } = req.body;
+    const user_id = req.user.id; // User._id from token
 
     const application = await Application.findById(id);
     if (!application) {
@@ -323,7 +336,13 @@ const updateApplicationStatus = async (req, res) => {
     }
 
     const project = await Project.findById(application.project_id);
-    if (project.client_id.toString() !== req.user.id) {
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    // Find the Client document for this user
+    const client = await Client.findOne({ user_id });
+    if (!client || project.client_id.toString() !== client._id.toString()) {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
@@ -331,7 +350,7 @@ const updateApplicationStatus = async (req, res) => {
       const contract = new Contract({
         project_id: project._id,
         freelancer_id: application.freelancer_id,
-        client_id: project.client_id,
+        client_id: client._id, // Use Client._id
         status: 'pending_tc', // Start with T&Cs submission
       });
       await contract.save();
@@ -349,6 +368,7 @@ const updateApplicationStatus = async (req, res) => {
       res.status(200).json({ message: `Application ${status}` });
     }
   } catch (error) {
+    console.error(error); // Log for debugging
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -359,8 +379,12 @@ const getMyProjects = async (req, res) => {
     if (role !== "client") {
       return res.status(403).json({ message: "Only clients can view their projects" });
     }
-
-    const projects = await Project.find({ client_id: id, deleted_at: null });
+    const client = await Client.findOne({ user_id :id});
+    if (!client) {
+      return res.status(403).json({ message: "Client profile not found for this user" });
+    }
+    const client_id = client._id;
+    const projects = await Project.find({ client_id: client_id, deleted_at: null });
     res.status(200).json(projects);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });

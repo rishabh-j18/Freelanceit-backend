@@ -3,7 +3,7 @@ const Client = require("../model/client");
 const User = require("../model/user");
 const otps = require("../model/otp");
 const Nonce = require("../model/nonce");
-const bcrypt = require("bcryptjs");
+const bcryptjs = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const ethers = require("ethers");
@@ -59,8 +59,8 @@ const registerWithEmail = async (req, res) => {
     let user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: "User already exists" });
 
-    const salt = await bcrypt.genSalt(10);
-    const password_hash = await bcrypt.hash(password, salt);
+    const salt = await bcryptjs.genSalt(10);
+    const password_hash = await bcryptjs.hash(password, salt);
 
     user = new User({ email, password_hash, role });
     await user.save();
@@ -188,6 +188,7 @@ const verifyemail = async (req, res) => {
       subject: "OTP to proceed",
       text: `Your OTP for the account ${email} is ${OTP} and is valid only for 5 minutes.`,
     };
+    console.log(OTP)
 
     const oldUser = await otps.findOne({ email });
     if (oldUser) {
@@ -234,7 +235,7 @@ const loginWithEmail = async (req, res) => {
     }
     
 
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    const isMatch = await bcryptjs.compare(password, user.password_hash);
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
 
@@ -416,8 +417,8 @@ const resetPassword = async (req, res) => {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const salt = await bcrypt.genSalt(10);
-    user.password_hash = await bcrypt.hash(newPassword, salt);
+    const salt = await bcryptjs.genSalt(10);
+    user.password_hash = await bcryptjs.hash(newPassword, salt);
     await user.save();
 
     res.status(200).json({ message: "Password reset successfully" });
@@ -475,10 +476,6 @@ const loginWithWallet = async (req, res) => {
     .populate({
       path: "reviews",
       model: "Review",
-    })
-    .populate({
-      path: "proposals",
-      model: "Proposal",
     });
 
   if (!user) {

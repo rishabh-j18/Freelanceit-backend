@@ -21,7 +21,7 @@ router.delete('/projects/:id', authMiddleware, deleteProject); // Delete gig
 router.get('/projects', getOpenProjects); // Get all open gigs (public)
 router.get('/projects/search', searchProjects); // Search gigs (public)
 router.get('/projects/filter', filterProjects); // Filter gigs (public)
-router.post('/projects/applications', authMiddleware, createApplication); // Submit application
+router.post('/applications', authMiddleware, createApplication); // Submit application
 router.get('/my-applications', authMiddleware, async (req, res) => { // New endpoint
   try {
     const applications = await Application.find({ freelancer_id: req.user.id })
@@ -33,7 +33,7 @@ router.get('/my-applications', authMiddleware, async (req, res) => { // New endp
   }
 });
 router.get('/projects/:id/applications', authMiddleware, getProjectApplications); // Get applications for a gig
-router.put('/projects/applications/:id', authMiddleware, updateApplicationStatus); // Update application status
+router.put('/applications/:id/status', authMiddleware, updateApplicationStatus); // Update application status
 
 router.get('/my-projects', authMiddleware, getMyProjects);
 

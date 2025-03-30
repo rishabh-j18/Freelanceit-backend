@@ -4,7 +4,7 @@ const paymentSchema = new mongoose.Schema({
   contract_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Contract', required: true },
   milestone_index: { type: Number, required: true },
   amount: { type: Number, required: true },
-  transaction_hash: { type: String, required: true },
+  transaction_hash: { type: String, required: false,default:'' },
   payment_date: { type: Date, required: true },
   status: { type: String, enum: ['pending', 'completed', 'disputed'], default: 'pending' }
 });
